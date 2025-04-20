@@ -3,6 +3,7 @@ from PIL import Image
 import io
 from models import MODELS
 from logger import logger
+from models.registry import get_model_handler
 
 import logging
 
@@ -22,9 +23,13 @@ def process_image():
         logger.error("No action specified in request.")
         return "error", 400
 
+    if action_name not in MODELS:
+        logger.error(f"Invalid action specified: '{action_name}'")
+        return "error", 400
+
     logger.info(f"Received request for action: '{action_name}'")
 
-    handler = MODELS.get(action_name)
+    handler = get_model_handler(action_name)
     if handler is None:
         logger.error(f"No model found for action: '{action_name}'")
         return "error", 400
@@ -45,7 +50,7 @@ def process_image():
         logger.info(f"Successfully processed image with action: '{action_name}'")
     except Exception as e:
         logger.error(f"Failed to process image with action '{action_name}': {e}")
-        return f"error: {e}", 500
+        return f"error", 500
 
     return result, 200
 

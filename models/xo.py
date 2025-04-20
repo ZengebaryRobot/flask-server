@@ -1,4 +1,4 @@
-from .registry import register_model
+from .registry import register_model, configure_camera
 from PIL import Image
 import cv2
 import numpy as np
@@ -150,8 +150,15 @@ def detect_tic_tac_toe(frame):
     return cells
 
 
+@configure_camera()
+def xo_camera_config(current_config):
+    current_config["brightness"] = 50
+
+    return current_config
+
+
 @register_model("xo")
-def xo_model(img: Image.Image) -> str:
+def process_image(img: Image.Image) -> str:
     result = np.array(detect_tic_tac_toe(img)).flatten().tolist()
 
     m = {"X": 1, "O": 2, "-": 0}
