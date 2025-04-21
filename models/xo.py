@@ -1,4 +1,4 @@
-from .registry import register_model, configure_camera
+from .registry import register_model
 from PIL import Image
 import cv2
 import numpy as np
@@ -148,13 +148,6 @@ def detect_tic_tac_toe(frame):
     # Convert grid to cells
     cells = convert_grid_to_cells(grid)
     return cells
-
-
-@configure_camera()
-def xo_camera_config(current_config):
-    current_config["brightness"] = 50
-
-    return current_config
 
 
 @register_model("xo")

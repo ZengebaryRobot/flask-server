@@ -1,4 +1,4 @@
-from .registry import register_model, configure_camera
+from .registry import register_model
 import cv2 as cv
 import numpy as np
 from PIL import Image
@@ -69,13 +69,6 @@ def get_cell_colors(frame):
 
             cell_colors.append(detected_color)
     return cell_colors
-
-
-@configure_camera()
-def rubik_camera_config(current_config):
-    current_config["brightness"] = 50
-
-    return current_config
 
 
 @register_model("rubik")

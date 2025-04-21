@@ -1,4 +1,4 @@
-from .registry import register_model, configure_camera
+from .registry import register_model
 import cv2 as cv
 import numpy as np
 from PIL import Image
@@ -38,13 +38,6 @@ colors = {
     "yellow": [65, 210, 200],
     "orange": [80, 140, 235],
 }
-
-
-@configure_camera()
-def rubik_camera_config(current_config):
-    current_config["brightness"] = 50
-
-    return current_config
 
 
 @register_model("cups")
