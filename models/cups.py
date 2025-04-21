@@ -69,7 +69,16 @@ def process_image(pil_img: Image.Image) -> str:
                 max_area[place_idx] = int(area)
                 detected[place_idx] = color_name
 
-    result = [color for color in detected if color is not None]
+    m = {
+        "red": 1,
+        "white": 2,
+        "blue": 3,
+        "green": 4,
+        "yellow": 5,
+        "orange": 6,
+    }
+
+    result = [str(m[color]) for color in detected if color is not None]
 
     result = ",".join(result) if result else "-1"
 
