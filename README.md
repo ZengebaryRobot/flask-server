@@ -45,7 +45,7 @@ This project hosts a Flask server that serves predictions from multiple models.
     Example:
 
     ```python
-    from .registry import register_modelstructure
+    from .registry import register_model
     from PIL import Image
     import numpy as np
 
