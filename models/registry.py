@@ -88,10 +88,9 @@ def send_camera_config():
         return True
 
     try:
-        response = requests.post(
-            "http://localhost:8000",
-            json=CAMERA_CONFIG,
-            headers={"Content-Type": "application/json"},
+        response = requests.get(
+            "http://192.168.1.18/config?"
+            + "&".join(f"{key}={value}" for key, value in CAMERA_CONFIG.items()),
         )
         response.raise_for_status()
         return True

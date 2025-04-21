@@ -163,6 +163,8 @@ def process_image(img: Image.Image) -> str:
 
     m = {"X": 1, "O": 2, "-": 0}
 
+    result = ",".join([str(m[item]) for item in result])
+
     logger.info(f"Result: {result}")
 
-    return ",".join([str(m[item]) for item in result])
+    return result
