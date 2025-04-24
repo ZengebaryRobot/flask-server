@@ -93,6 +93,15 @@ def detect_tic_tac_toe(frame):
     cv_img = cv2.cvtColor(np.array(frame), cv2.COLOR_RGB2BGR)
     frame = cv2.resize(cv_img, (320, 240))
 
+    # Crop frame to focus on the game area
+    x1, y1 = 66, 105
+    x2, y2 = 282, 239
+    frame_original = frame.copy()
+    frame = frame[y1:y2, x1:x2]
+
+    # Draw crop boundaries on original frame for visualization
+    cv2.rectangle(frame_original, (x1, y1), (x2, y2), (255, 255, 0), 2)
+
     # Detect pieces with YOLO
     detections = process_pieces(frame)
 
@@ -112,7 +121,7 @@ def detect_tic_tac_toe(frame):
     thresh = cv2.bitwise_not(thresh)
 
     # Apply brightness mask
-    bright_mask = gray > 120
+    bright_mask = gray > 125
     thresh = cv2.bitwise_and(thresh, thresh, mask=bright_mask.astype(np.uint8) * 255)
 
     # Morphological operations
