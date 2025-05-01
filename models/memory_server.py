@@ -10,6 +10,9 @@ from logger import logger
 ROWS = 2
 COLS = 3
 
+state_mapping = {}
+next_state = 0
+
 def order_points(pts):
     """Order points in top-left, top-right, bottom-right, bottom-left order"""
     rect = np.zeros((4, 2), dtype=np.float32)
@@ -73,9 +76,10 @@ def load_grid_coordinates():
         logger.error(f"Error loading coordinates: {e}")
         return None
 
-@register_model("matrix_cards")
+@register_model("memory")
 def process_image(pil_img: Image.Image) -> str:
     """Process an image to detect cards in a grid and return a comma-separated string result"""
+    global state_mapping, next_state
     # Convert PIL Image to OpenCV format
     frame = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
     
@@ -142,21 +146,31 @@ def process_image(pil_img: Image.Image) -> str:
                 label = r.names[int(boxes.cls[i])]
                 conf = float(boxes.conf[i])
                 
+                # Map the label to a numeric state if not already mapped
+                if label not in state_mapping and len(state_mapping) < 3:
+                    state_mapping[label] = next_state
+                    next_state += 1
+                    logger.info(f"New state mapping: {label} → {next_state-1}")
+                
                 if conf > grid_confidences[cell_row][cell_col]:
                     grid_labels[cell_row][cell_col] = label
                     grid_confidences[cell_row][cell_col] = conf
     
-    # Format the results as a comma-separated string
-    # Format: row,col,label or Empty if no card detected
-    result = []
+        # Format the results as a comma-separated string of state values
+    state_list = []
     for row in range(ROWS):
         for col in range(COLS):
             if grid_labels[row][col] is not None:
-                result.append(f"{row},{col},{grid_labels[row][col]}")
+                # Get the state value or -1 if not in mapping
+                state_value = state_mapping.get(grid_labels[row][col], -1)
+                state_list.append(str(state_value))
             else:
-                result.append(f"{row},{col},Empty")
+                # Empty cell gets state -1
+                state_list.append("-1")
     
-    output = ",".join(result)
-    logger.info(f"Matrix cards result: {output}")
+    # Join with commas to create a simple CSV string
+    output = ",".join(state_list)
+    logger.info(f"Current state mapping: {state_mapping}")
+    logger.info(f"Matrix cards result (state values): {output}")
     
     return output
