@@ -2,9 +2,15 @@ import cv2 as cv
 import numpy as np
 import time
 from threading import Lock
+from .registry import register_model
+from PIL import Image
+from logger import logger
 
 PLACES = [(120, 160, 75, 80), (260, 165, 75, 80), (400, 170, 75, 80)]
 lock = Lock()
+
+STREAM_URL = "http://192.168.66.137/stream"
+
 
 def get_limits(color_dict):
     limits = {}
@@ -18,11 +24,18 @@ def get_limits(color_dict):
         limits[color_name] = (lower_limit, upper_limit)
     return limits
 
+
 def is_inside(x, y, w, h):
     for index, point in enumerate(PLACES):
-        if point[0] < x < point[0] + point[2] and point[1] < y < point[1] + point[3] and w < point[2] and h < point[3]:
+        if (
+            point[0] < x < point[0] + point[2]
+            and point[1] < y < point[1] + point[3]
+            and w < point[2]
+            and h < point[3]
+        ):
             return index
     return -1
+
 
 def is_most_inside(x, y, w, h):
     for index, point in enumerate(PLACES):
@@ -45,17 +58,19 @@ def is_most_inside(x, y, w, h):
             return index
     return -1
 
+
 final_result = [None, None, None]
+
+
 def cups_ai(required_objects=1):
     colors = {
-        'red': [65, 60, 160],
-        'blue': [230, 216, 173],
-        'yellow': [110, 170, 170],
+        "red": [65, 60, 160],
+        "blue": [230, 216, 173],
+        "yellow": [110, 170, 170],
     }
     result = [None, None, None]
     ok = True
-    url = "http://10.42.0.234:81/stream"
-    capture = cv.VideoCapture(0)
+    capture = cv.VideoCapture(STREAM_URL)
     limits = get_limits(colors)
 
     DISAPPEARANCE_THRESHOLD = 1
@@ -69,12 +84,19 @@ def cups_ai(required_objects=1):
     disappearance_start_time = None
     # Detection Mode
     while ok and not tracking_mode:
+        logger.info("Detection Mode for cups capturing")
         ok, frame = capture.read()
         if not ok:
             break
 
         for place in PLACES:
-            frame = cv.rectangle(frame, (place[0], place[1]), (place[0] + place[2], place[1] + place[3]), (0, 0, 0), 2)
+            frame = cv.rectangle(
+                frame,
+                (place[0], place[1]),
+                (place[0] + place[2], place[1] + place[3]),
+                (0, 0, 0),
+                2,
+            )
 
         hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
         current_objects = {}
@@ -91,10 +113,29 @@ def cups_ai(required_objects=1):
                 aspect_ratio = w / h
                 place = is_inside(x, y, w, h)
                 if area > 1000 and 0.5 < aspect_ratio < 2.0 and place != -1:
-                    if place not in current_objects or area > cv.contourArea(cv.boxPoints(cv.minAreaRect(contour))):
-                        current_objects[place] = (color_name, (PLACES[place][0], PLACES[place][1], PLACES[place][2], PLACES[place][3]))
+                    if place not in current_objects or area > cv.contourArea(
+                        cv.boxPoints(cv.minAreaRect(contour))
+                    ):
+                        current_objects[place] = (
+                            color_name,
+                            (
+                                PLACES[place][0],
+                                PLACES[place][1],
+                                PLACES[place][2],
+                                PLACES[place][3],
+                            ),
+                        )
                         num_detected_objects += 1
-                        frame = cv.rectangle(frame, (PLACES[place][0], PLACES[place][1]), (PLACES[place][0] + PLACES[place][2], PLACES[place][1] + PLACES[place][3]), colors[color_name], 2)
+                        frame = cv.rectangle(
+                            frame,
+                            (PLACES[place][0], PLACES[place][1]),
+                            (
+                                PLACES[place][0] + PLACES[place][2],
+                                PLACES[place][1] + PLACES[place][3],
+                            ),
+                            colors[color_name],
+                            2,
+                        )
 
         current_time = time.time()
 
@@ -112,9 +153,12 @@ def cups_ai(required_objects=1):
                 for place_idx, (color_name, bbox) in current_objects.items():
                     if color_name in expected_colors:
                         new_expected_objects[place_idx] = (color_name, bbox)
-                
+
                 for place_idx, (color_name, bbox) in expected_objects.items():
-                    if color_name not in detected_colors and color_name in expected_colors:
+                    if (
+                        color_name not in detected_colors
+                        and color_name in expected_colors
+                    ):
                         new_expected_objects[place_idx] = (color_name, bbox)
 
                 expected_objects = new_expected_objects
@@ -133,7 +177,7 @@ def cups_ai(required_objects=1):
             expected_objects = {}
 
         cv.imshow("frame", frame)
-        if cv.waitKey(1) == ord('d'):
+        if cv.waitKey(1) == ord("d"):
             break
 
     # Tracking Mode
@@ -163,7 +207,9 @@ def cups_ai(required_objects=1):
 
             valid_trackers_inside = 0
 
-            for i, (tracker_kcf, tracker_csrt) in enumerate(zip(trackers_kcf, trackers_csrt)):
+            for i, (tracker_kcf, tracker_csrt) in enumerate(
+                zip(trackers_kcf, trackers_csrt)
+            ):
                 if not use_csrt[i]:
                     success, bbox = tracker_kcf.update(frame)
                 else:
@@ -180,7 +226,9 @@ def cups_ai(required_objects=1):
                     h = init_h
                     x = max(0, min(x, frame.shape[1] - w))
                     y = max(0, min(y, frame.shape[0] - h))
-                    cv.rectangle(frame, (x, y), (x + w, y + h), colors[bboxes_colors[i]], 2)
+                    cv.rectangle(
+                        frame, (x, y), (x + w, y + h), colors[bboxes_colors[i]], 2
+                    )
                     place_index = is_most_inside(x, y, w, h)
                     if place_index != -1:
                         valid_trackers_inside += 1
@@ -191,7 +239,7 @@ def cups_ai(required_objects=1):
                     if not use_csrt[i]:
                         if prev_bboxes[i] is not None:
                             prev_x, prev_y, _, _ = prev_bboxes[i]
-                            bbox_change = np.sqrt((x - prev_x)**2 + (y - prev_y)**2)
+                            bbox_change = np.sqrt((x - prev_x) ** 2 + (y - prev_y) ** 2)
                             confidence = 1 / (1 + bbox_change)
                             if confidence < 0.7:
                                 use_csrt[i] = True
@@ -205,7 +253,15 @@ def cups_ai(required_objects=1):
                             tracker_kcf.init(frame, (x, y, w, h))
                             trackers_kcf[i] = tracker_kcf
                 else:
-                    cv.putText(frame, f"Lost {i+1}", (10, 50 + i*30), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                    cv.putText(
+                        frame,
+                        f"Lost {i+1}",
+                        (10, 50 + i * 30),
+                        cv.FONT_HERSHEY_SIMPLEX,
+                        0.7,
+                        (0, 0, 255),
+                        2,
+                    )
 
             if valid_trackers_inside == required_objects:
                 if condition_start_time is None:
@@ -217,20 +273,33 @@ def cups_ai(required_objects=1):
                 result = [None, None, None]
 
             for place in PLACES:
-                frame = cv.rectangle(frame, (place[0], place[1]), (place[0] + place[2], place[1] + place[3]), (0, 0, 0), 2)
+                frame = cv.rectangle(
+                    frame,
+                    (place[0], place[1]),
+                    (place[0] + place[2], place[1] + place[3]),
+                    (0, 0, 0),
+                    2,
+                )
 
             cv.imshow("Multi-Object Tracking", frame)
-            if cv.waitKey(1) & 0xFF == ord('d'):
+            if cv.waitKey(1) & 0xFF == ord("d"):
                 break
         with lock:
             final_result = result
         capture.release()
         cv.destroyAllWindows()
 
-def return_result():
+
+@register_model("cupsResult")
+def cups_result(img: Image.Image) -> str:
     global final_result
+
     with lock:
-        if final_result[0] is None and final_result[1] is None and final_result[2] is None:
-            return "Still Processing", 400
-        else:
-            return final_result, 200
+        if (
+            final_result[0] is not None
+            and final_result[1] is not None
+            and final_result[2] is not None
+        ):
+            return ",".join([str(x) for x in final_result])
+
+    return "-1"
