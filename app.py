@@ -1,3 +1,4 @@
+import cv2 as cv 
 from flask import Flask, request
 from PIL import Image
 import io
@@ -7,10 +8,19 @@ from models.registry import get_model_handler
 from models.cups import cups_ai
 import threading
 import logging
+from globals import url
 
 logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
 app = Flask(__name__)
+
+
+#  how to connect with mobile  
+# 1. install ip webcam on mobile 
+# 2. open hotspot from your laptop and connect to your mobile 
+# 3. start server on laptop flask run or python app.py
+# 4. update the url in globals.py with the ip address of your mobile
+# 5. open the app and start server on mobile
 
 
 @app.route("/cups/start", methods=["POST"])
@@ -19,6 +29,7 @@ def start_cups():
     print(f"Received num_colors: {num_colors}")
     threading.Thread(target=cups_ai, args=(num_colors,)).start()
     return "Cups AI is running", 200
+
 
 
 @app.route("/process", methods=["POST"])
@@ -44,12 +55,13 @@ def process_image():
         return "error", 400
 
     try:
-        if "image" in request.files:
-            img = Image.open(request.files["image"].stream).convert("RGB")
-            logger.info("Image successfully loaded from 'files'.")
-        else:
-            img = Image.open(io.BytesIO(request.get_data())).convert("RGB")
-            logger.info("Image successfully loaded from raw data.")
+        cap = cv.VideoCapture(url)
+        ret, img = cap.read()
+        if not ret:
+            logger.error("Failed to capture frame from video source.")
+            return "error", 400
+        cap.release()
+        logger.info("Image successfully captured from video source.")
     except Exception as e:
         logger.error(f"Failed to open image: {e}")
         return "error", 400
@@ -66,4 +78,5 @@ def process_image():
 
 if __name__ == "__main__":
     print("Starting Flask server...", flush=True)
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    # change port to 8080
+    app.run(host="0.0.0.0", port=8080, debug=False)

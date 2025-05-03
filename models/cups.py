@@ -6,11 +6,14 @@ from .registry import register_model
 from PIL import Image
 from logger import logger
 
+from globals import url
+
 PLACES = [(120, 160, 75, 80), (260, 165, 75, 80), (400, 170, 75, 80)]
 lock = Lock()
 
-STREAM_URL = "http://192.168.66.137/stream"
+# STREAM_URL = "http://192.168.66.137/stream"
 
+STREAM_URL = url
 
 def get_limits(color_dict):
     limits = {}
