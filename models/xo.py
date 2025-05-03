@@ -18,18 +18,8 @@ logging.getLogger("ultralytics").setLevel(logging.ERROR)
 
 
 device_str = "cuda:0" if torch.cuda.is_available() else "cpu"
-base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-model_path = os.path.join(base_dir, "models_files", "xo.pt")
-
-# Add debug information to help diagnose
-print(f"Looking for model at: {model_path}")
-print(f"Current working directory: {os.getcwd()}")
-print(f"Directory exists: {os.path.exists(os.path.dirname(model_path))}")
-
-# Then load the model with the absolute path
-model = YOLO(model_path, verbose=False)
+model = YOLO("../models_files/xo.pt", verbose=False)
 model.model.to(device_str)
-print("Model loaded successfully XO.")
 
 
 def process_pieces(frame):
