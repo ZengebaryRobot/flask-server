@@ -13,6 +13,16 @@ COLS = 3
 state_mapping = {}
 next_state = 0
 
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+model_path = os.path.join(base_dir, "models_files", "yolo11_cards.pt")
+    
+logger.info(f"Loading YOLO model from {model_path}")
+try:
+    model = YOLO(model_path)
+    logger.info("Matrix cards model loaded successfully")
+except Exception as e:
+    logger.error(f"Error loading YOLO model: {e}")
+
 def order_points(pts):
     """Order points in top-left, top-right, bottom-right, bottom-left order"""
     rect = np.zeros((4, 2), dtype=np.float32)
@@ -56,7 +66,9 @@ def create_grid_matrix(points, rows=ROWS, cols=COLS):
 def load_grid_coordinates():
     """Load grid coordinates from file"""
     coords_file = 'coords.txt'
-    if not os.path.exists(coords_file):
+    now_path = os.path.dirname(os.path.abspath(__file__))
+    coords_file = os.path.join(now_path, coords_file)
+    if not coords_file or not os.path.exists(coords_file):
         logger.warning(f"{coords_file} not found")
         return None
     
@@ -82,18 +94,6 @@ def process_image(pil_img: Image.Image) -> str:
     global state_mapping, next_state
     # Convert PIL Image to OpenCV format
     frame = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
-    
-    # Load the model
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    model_path = os.path.join(base_dir, "models_files", "yolo11_cards.pt")
-    
-    logger.info(f"Loading YOLO model from {model_path}")
-    try:
-        model = YOLO(model_path)
-        logger.info("Matrix cards model loaded successfully")
-    except Exception as e:
-        logger.error(f"Error loading YOLO model: {e}")
-        return "error"
     
     # Get grid points - first try from file, then use default
     points = load_grid_coordinates()
@@ -122,8 +122,8 @@ def process_image(pil_img: Image.Image) -> str:
     results = model.predict(
         source=frame,
         conf=0.3,
-        imgsz=1600,
-        verbose=False
+        imgsz=1792,
+        verbose=False,
     )
     
     # Process detection results
@@ -158,19 +158,24 @@ def process_image(pil_img: Image.Image) -> str:
     
         # Format the results as a comma-separated string of state values
     state_list = []
+    label_list = []
     for row in range(ROWS):
         for col in range(COLS):
             if grid_labels[row][col] is not None:
                 # Get the state value or -1 if not in mapping
                 state_value = state_mapping.get(grid_labels[row][col], -1)
                 state_list.append(str(state_value))
+
+                label_list.append(grid_labels[row][col])
             else:
                 # Empty cell gets state -1
                 state_list.append("-1")
+                label_list.append("-1")
     
     # Join with commas to create a simple CSV string
     output = ",".join(state_list)
     logger.info(f"Current state mapping: {state_mapping}")
     logger.info(f"Matrix cards result (state values): {output}")
+    logger.info(f"Matrix cards result (labels): {','.join(label_list)}")
     
     return output

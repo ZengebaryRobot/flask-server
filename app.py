@@ -4,6 +4,7 @@ import io
 from models import MODELS
 from logger import logger
 from models.registry import get_model_handler
+import os 
 
 import logging
 
@@ -35,12 +36,23 @@ def process_image():
         return "error", 400
 
     try:
+        save_dir = os.path.join(os.path.dirname(__file__), "received_images")
+        os.makedirs(save_dir, exist_ok=True)
+        
+        # Generate unique filename with timestamp
+        filename = "img.jpg"
+        file_path = os.path.join(save_dir, filename)
+
         if "image" in request.files:
             img = Image.open(request.files["image"].stream).convert("RGB")
             logger.info("Image successfully loaded from 'files'.")
         else:
             img = Image.open(io.BytesIO(request.get_data())).convert("RGB")
             logger.info("Image successfully loaded from raw data.")
+
+        img.save(file_path)
+        logger.info(f"Image saved to {file_path}")
+        
     except Exception as e:
         logger.error(f"Failed to open image: {e}")
         return "error", 400
@@ -58,3 +70,5 @@ def process_image():
 if __name__ == "__main__":
     print("Starting Flask server...", flush=True)
     app.run(host="0.0.0.0", port=5000, debug=False)
+
+    #flask run // 
