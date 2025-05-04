@@ -104,8 +104,8 @@ def detect_tic_tac_toe(frame):
     frame = cv2.resize(cv_img, (320, 240))
 
     # Crop frame to focus on the game area
-    x1, y1 = 66, 105
-    x2, y2 = 282, 239
+    x1, y1 = 70, 95
+    x2, y2 = 300, 238
     frame_original = frame.copy()
     frame = frame[y1:y2, x1:x2]
 
@@ -153,7 +153,7 @@ def detect_tic_tac_toe(frame):
             if 0.8 <= aspect_ratio <= 1.2 and 14 < w < 65:
                 roi = gray[y : y + h, x : x + w]
                 avg_brightness = np.mean(roi)
-                if avg_brightness > 100:
+                if avg_brightness > 120:
                     center_x = int(x + w / 2)
                     center_y = int(y + h / 2)
                     grid.append((center_x, center_y, "-"))
