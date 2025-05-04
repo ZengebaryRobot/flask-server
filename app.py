@@ -4,13 +4,22 @@ import io
 from models import MODELS
 from logger import logger
 from models.registry import get_model_handler
-import os 
-
+from models.cups import cups_ai
+import threading
 import logging
+import os
 
 logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
 app = Flask(__name__)
+
+
+@app.route("/cups/start", methods=["POST"])
+def start_cups():
+    num_colors = int(request.args.get("num_colors", default=1))
+    print(f"Received num_colors: {num_colors}")
+    threading.Thread(target=cups_ai, args=(num_colors,)).start()
+    return "Cups AI is running", 200
 
 
 @app.route("/process", methods=["POST"])
