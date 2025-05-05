@@ -59,8 +59,8 @@ def process_image():
             img = Image.open(io.BytesIO(request.get_data())).convert("RGB")
             logger.info("Image successfully loaded from raw data.")
 
-        img.save(file_path)
-        logger.info(f"Image saved to {file_path}")
+        #img.save(file_path)
+        #logger.info(f"Image saved to {file_path}")
         
     except Exception as e:
         logger.error(f"Failed to open image: {e}")

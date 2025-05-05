@@ -122,7 +122,7 @@ def process_image(pil_img: Image.Image) -> str:
     results = model.predict(
         source=frame,
         conf=0.3,
-        imgsz=1792,
+        imgsz=1600,
         verbose=False,
     )
     
