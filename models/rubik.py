@@ -166,7 +166,7 @@ def main(img: Image.Image) -> str:
         }
         final_string = "".join([color_map[c] for c in cubestring])
         print(final_string)
-        sol = solver.solve(cubestring, 20, 2)
+        sol = solver.solve(cubestring, 20, 5)
         if sol.startswith("Error"):
             raise ValueError("Error in solving the cube: " + sol)
         
