@@ -129,7 +129,8 @@ scans = []
 @register_model("rubik")
 def main(img: Image.Image) -> str:
     # Save the input image exactly as received
-    img.save("debug_input_pil.png")
+    fileName = "Scan-" + str(len(scans)) + ".png"
+    img.save(fileName)
     
     
     # Process frame
@@ -155,6 +156,16 @@ def main(img: Image.Image) -> str:
         cube.process_scans()
         cubestring = cube.get_cube_state()
         print(cubestring)
+        color_map = {
+            'B': 'W',
+            'F': 'Y',
+            'R': 'G',
+            'L': 'B',
+            'D': 'R',
+            'U': 'O'
+        }
+        final_string = "".join([color_map[c] for c in cubestring])
+        print(final_string)
         sol = solver.solve(cubestring, 20, 2)
         if sol.startswith("Error"):
             raise ValueError("Error in solving the cube: " + sol)
@@ -166,7 +177,7 @@ def main(img: Image.Image) -> str:
         logger.info("Result: " + sol)
         return sol
     else:
-        return "-1"
+        return "".join(scan)
     
 @register_model("rubikReset")
 def reset_rubik(img: Image.Image) -> str:
