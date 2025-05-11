@@ -45,12 +45,6 @@ def process_image():
         return "error", 400
 
     try:
-        save_dir = os.path.join(os.path.dirname(__file__), "received_images")
-        os.makedirs(save_dir, exist_ok=True)
-        
-        # Generate unique filename with timestamp
-        filename = "img.jpg"
-        file_path = os.path.join(save_dir, filename)
 
         if "image" in request.files:
             img = Image.open(request.files["image"].stream).convert("RGB")

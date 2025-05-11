@@ -129,8 +129,8 @@ scans = []
 @register_model("rubik")
 def main(img: Image.Image) -> str:
     # Save the input image exactly as received
-    fileName = "Scan-" + str(len(scans)) + ".png"
-    img.save(fileName)
+    # fileName = "Scan-" + str(len(scans)) + ".png"
+    # img.save(fileName)
     
     
     # Process frame
