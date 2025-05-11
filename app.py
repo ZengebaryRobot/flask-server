@@ -59,8 +59,6 @@ def process_image():
             img = Image.open(io.BytesIO(request.get_data())).convert("RGB")
             logger.info("Image successfully loaded from raw data.")
 
-        #img.save(file_path)
-        #logger.info(f"Image saved to {file_path}")
         
     except Exception as e:
         logger.error(f"Failed to open image: {e}")
@@ -79,5 +77,3 @@ def process_image():
 if __name__ == "__main__":
     print("Starting Flask server...", flush=True)
     app.run(host="0.0.0.0", port=5000, debug=False)
-
-    #flask run // 
