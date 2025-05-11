@@ -125,13 +125,13 @@ def detect_tic_tac_toe(frame):
     otsu_threshold, _ = cv2.threshold(
         blurred, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
     )
-    bias = 30
+    bias = 28
     biased_threshold = min(255, otsu_threshold + bias)
     _, thresh = cv2.threshold(blurred, biased_threshold, 255, cv2.THRESH_BINARY_INV)
     thresh = cv2.bitwise_not(thresh)
 
     # Apply brightness mask
-    bright_mask = gray > 125
+    bright_mask = gray > 110
     thresh = cv2.bitwise_and(thresh, thresh, mask=bright_mask.astype(np.uint8) * 255)
 
     # Morphological operations
@@ -150,12 +150,12 @@ def detect_tic_tac_toe(frame):
         if len(approx) == 4:
             x, y, w, h = cv2.boundingRect(approx)
             aspect_ratio = w / float(h)
-            if 0.8 <= aspect_ratio <= 1.2 and 14 < w < 65:
+            if 0.8 <= aspect_ratio <= 1.2 and 12 < w < 65:
                 roi = gray[y : y + h, x : x + w]
                 avg_brightness = np.mean(roi)
-                if avg_brightness > 120:
+                if avg_brightness > 100:
                     center_x = int(x + w / 2)
-                    center_y = int(y + h / 2)
+                    center_y = int(y + w / 2)
                     grid.append((center_x, center_y, "-"))
 
     # Add detected pieces to grid

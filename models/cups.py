@@ -1,15 +1,20 @@
 import cv2 as cv
 import numpy as np
 import time
+from .registry import register_model
 from threading import Lock
 from .registry import register_model
 from PIL import Image
 from logger import logger
+import copy
 
-PLACES = [(120, 160, 75, 80), (260, 165, 75, 80), (400, 170, 75, 80)]
+PLACES = [(160, 310, 75, 80), (320, 310, 75, 80), (460, 310, 75, 80)]
+
+PLACES_TO_USE = [(150, 350, 75, 80), (320, 350, 75, 80), (490, 350, 75, 80)]
+
 lock = Lock()
 
-STREAM_URL = "http://192.168.66.137/stream"
+STREAM_URL = "http://192.168.1.3/stream"
 
 
 def get_limits(color_dict):
@@ -38,7 +43,7 @@ def is_inside(x, y, w, h):
 
 
 def is_most_inside(x, y, w, h):
-    for index, point in enumerate(PLACES):
+    for index, point in enumerate(PLACES_TO_USE):
         place_x_range = (point[0], point[0] + point[2])
         bbox_x_range = (x, x + w)
         place_y_range = (point[1], point[1] + point[3])
@@ -64,17 +69,17 @@ final_result = [None, None, None]
 
 def cups_ai(required_objects=1):
     colors = {
-        "red": [65, 60, 160],
-        "blue": [230, 216, 173],
-        "yellow": [110, 170, 170],
+        "1": [65, 60, 160],  # red
+        "2": [230, 216, 173],  # blue
+        "3": [110, 170, 170],  # yellow
     }
     result = [None, None, None]
     ok = True
     capture = cv.VideoCapture(STREAM_URL)
     limits = get_limits(colors)
 
-    DISAPPEARANCE_THRESHOLD = 1
-    STOP_TIME = 5.0
+    DISAPPEARANCE_THRESHOLD = 2
+    STOP_TIME = 10.0
     tracking_mode = False
     bboxes_colors = []
     bboxes_places = []
@@ -84,7 +89,7 @@ def cups_ai(required_objects=1):
     disappearance_start_time = None
     # Detection Mode
     while ok and not tracking_mode:
-        logger.info("Detection Mode for cups capturing")
+        # logger.info("Detection Mode for cups capturing")
         ok, frame = capture.read()
         if not ok:
             break
@@ -190,8 +195,8 @@ def cups_ai(required_objects=1):
         csrt_frame_counters = [0] * len(bboxes_places)
         condition_start_time = None
 
-        for bbox in bboxes_coords:
-            x, y, w, h = bbox
+        for bbox in bboxes_places:
+            (x, y, w, h) = PLACES_TO_USE[bbox]
             initial_bboxes.append((w, h))
             tracker_kcf = cv.TrackerKCF_create()
             tracker_csrt = cv.TrackerCSRT_create()
@@ -284,6 +289,7 @@ def cups_ai(required_objects=1):
             cv.imshow("Multi-Object Tracking", frame)
             if cv.waitKey(1) & 0xFF == ord("d"):
                 break
+        global final_result
         with lock:
             final_result = result
         capture.release()
@@ -293,13 +299,15 @@ def cups_ai(required_objects=1):
 @register_model("cupsResult")
 def cups_result(img: Image.Image) -> str:
     global final_result
-
     with lock:
         if (
             final_result[0] is not None
-            and final_result[1] is not None
-            and final_result[2] is not None
+            or final_result[1] is not None
+            or final_result[2] is not None
         ):
-            return ",".join([str(x) for x in final_result])
-
-    return "-1"
+            returned_result = copy.deepcopy(final_result)
+            returned_result = np.array(returned_result).flatten().tolist()
+            final_result = [None, None, None]
+            result_str = ",".join(map(str, returned_result))
+            return result_str
+    return "ERROR"
