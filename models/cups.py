@@ -8,13 +8,13 @@ from PIL import Image
 from logger import logger
 import copy
 
-PLACES = [(160, 310, 75, 80), (320, 310, 75, 80), (460, 310, 75, 80)]
+PLACES = [(210, 250, 50, 60), (290, 250, 50, 60), (375, 250, 50, 60)]
 
-PLACES_TO_USE = [(150, 350, 75, 80), (320, 350, 75, 80), (490, 350, 75, 80)]
+PLACES_TO_USE = [(200, 250, 40, 50), (280, 250, 40, 50), (375, 250, 40, 50)]
 
 lock = Lock()
 
-STREAM_URL = "http://192.168.1.3/stream"
+STREAM_URL = "http://192.168.25.210:8080/video"
 
 
 def get_limits(color_dict):
@@ -59,7 +59,7 @@ def is_most_inside(x, y, w, h):
         if box_area == 0:
             return -1
         overlap_percentage = (intersection_area / box_area) * 100
-        if overlap_percentage > 50:
+        if overlap_percentage > 20:
             return index
     return -1
 
@@ -71,7 +71,7 @@ def cups_ai(required_objects=1):
     colors = {
         "1": [65, 60, 160],  # red
         "2": [230, 216, 173],  # blue
-        "3": [110, 170, 170],  # yellow
+        "3": [65, 210, 200],  # yellow
     }
     result = [None, None, None]
     ok = True
@@ -117,7 +117,7 @@ def cups_ai(required_objects=1):
                 x, y, w, h = cv.boundingRect(contour)
                 aspect_ratio = w / h
                 place = is_inside(x, y, w, h)
-                if area > 1000 and 0.5 < aspect_ratio < 2.0 and place != -1:
+                if area > 10 and 0.5 < aspect_ratio < 2.0 and place != -1:
                     if place not in current_objects or area > cv.contourArea(
                         cv.boxPoints(cv.minAreaRect(contour))
                     ):
@@ -277,7 +277,7 @@ def cups_ai(required_objects=1):
                 condition_start_time = None
                 result = [None, None, None]
 
-            for place in PLACES:
+            for place in PLACES_TO_USE:
                 frame = cv.rectangle(
                     frame,
                     (place[0], place[1]),
@@ -307,6 +307,7 @@ def cups_result(img: Image.Image) -> str:
         ):
             returned_result = copy.deepcopy(final_result)
             returned_result = np.array(returned_result).flatten().tolist()
+            returned_result.reverse()
             final_result = [None, None, None]
             result_str = ",".join(map(str, returned_result))
             return result_str
