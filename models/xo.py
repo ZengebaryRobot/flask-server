@@ -104,8 +104,8 @@ def detect_tic_tac_toe(frame):
     frame = cv2.resize(cv_img, (320, 240))
 
     # Crop frame to focus on the game area
-    x1, y1 = 70, 95
-    x2, y2 = 300, 238
+    x1, y1 = 48, 64
+    x2, y2 = 294, 209
     frame_original = frame.copy()
     frame = frame[y1:y2, x1:x2]
 
